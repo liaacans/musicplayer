@@ -10,11 +10,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <!-- Navbar - FIXED VERSION -->
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
@@ -38,7 +40,7 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#playlist">Daftar Lagu</a>
                     </li>
-                    <!-- Admin Login Menu - Akan diisi oleh JavaScript -->
+                    <!-- Admin Login Menu -->
                     <li class="nav-item" id="adminMenuContainer" style="min-width: 120px;">
                         <div id="adminMenuContent">
                             <!-- Akan diisi oleh JavaScript -->
@@ -54,15 +56,15 @@
         <div class="container">
             <div class="row min-vh-100 align-items-center">
                 <div class="col-lg-6 text-white">
-                    <h1 class="display-4 fw-bold mb-4">
+                    <h1 class="display-4 fw-bold mb-4 animate__animated animate__fadeInUp">
                         Mengapa harus putar lagu disini?
                     </h1>
-                    <p class="lead mb-4">
+                    <p class="lead mb-4 animate__animated animate__fadeInUp animate__delay-1s">
                         Nikmati pengalaman mendengarkan musik terbaik dengan kualitas audio premium, 
                         koleksi lagu terlengkap, dan fitur-fitur canggih yang akan memanjakan telinga Anda.
                         <br><span class="text-warning">✨ GRATIS! Tanpa Login! ✨</span>
                     </p>
-                    <div>
+                    <div class="animate__animated animate__fadeInUp animate__delay-2s">
                         <button class="btn btn-primary btn-lg me-3" onclick="scrollToMusic()">
                             <i class="fas fa-play me-2"></i>Putar Musik
                         </button>
@@ -136,7 +138,7 @@
                         </div>
 
                         <div class="album-art">
-                            <img id="currentAlbumArt" src="https://via.placeholder.com/300x300?text=Music" alt="Album Art">
+                            <img id="currentAlbumArt" src="https://via.placeholder.com/300x300?text=Music+Player" alt="Album Art">
                             <div class="visualizer" id="visualizer">
                                 <div class="bar"></div>
                                 <div class="bar"></div>
@@ -197,6 +199,11 @@
         <div class="container">
             <h2 class="text-center mb-5 section-title">Daftar Lagu Tersedia</h2>
             
+            <!-- Stats Summary -->
+            <div class="row mb-4" id="musicStatsSummary">
+                <!-- Akan diisi JavaScript -->
+            </div>
+            
             <!-- Search dan Filter -->
             <div class="row mb-4">
                 <div class="col-md-8 mx-auto">
@@ -208,27 +215,35 @@
                         </button>
                     </div>
                     
-                    <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap">
+                    <div class="d-flex justify-content-center gap-2 mb-3 flex-wrap" id="filterButtons">
                         <button class="btn btn-outline-primary btn-sm filter-btn active" onclick="filterPublicMusic('all')">
-                            Semua
+                            Semua <span id="countAll" class="badge bg-light text-dark ms-1">0</span>
                         </button>
                         <button class="btn btn-outline-primary btn-sm filter-btn" onclick="filterPublicMusic('Pop')">
-                            Pop
+                            Pop <span id="countPop" class="badge bg-light text-dark ms-1">0</span>
                         </button>
                         <button class="btn btn-outline-primary btn-sm filter-btn" onclick="filterPublicMusic('Rock')">
-                            Rock
+                            Rock <span id="countRock" class="badge bg-light text-dark ms-1">0</span>
                         </button>
                         <button class="btn btn-outline-primary btn-sm filter-btn" onclick="filterPublicMusic('Jazz')">
-                            Jazz
+                            Jazz <span id="countJazz" class="badge bg-light text-dark ms-1">0</span>
                         </button>
                         <button class="btn btn-outline-primary btn-sm filter-btn" onclick="filterPublicMusic('Dangdut')">
-                            Dangdut
+                            Dangdut <span id="countDangdut" class="badge bg-light text-dark ms-1">0</span>
                         </button>
                         <button class="btn btn-outline-primary btn-sm filter-btn" onclick="filterPublicMusic('Classical')">
-                            Classical
+                            Classical <span id="countClassical" class="badge bg-light text-dark ms-1">0</span>
                         </button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Memuat daftar lagu...</p>
             </div>
             
             <!-- Music Grid -->
@@ -236,12 +251,20 @@
                 <!-- Akan diisi JavaScript -->
             </div>
             
+            <!-- No Results Message -->
+            <div id="noResultsMessage" class="text-center py-5" style="display: none;">
+                <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">Tidak ada lagu ditemukan</h4>
+                <p class="text-muted">Coba kata kunci pencarian yang berbeda</p>
+            </div>
+            
             <!-- Music List Alternatif -->
             <div class="row mt-4">
                 <div class="col-12">
                     <div class="card">
-                        <div class="card-header bg-primary text-white">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                             <h5 class="mb-0"><i class="fas fa-list me-2"></i>Daftar Lagu Lengkap</h5>
+                            <span id="totalSongsBadge" class="badge bg-light text-dark">0 Lagu</span>
                         </div>
                         <div class="card-body">
                             <div class="playlist-container" id="publicPlaylist">
@@ -259,18 +282,28 @@
         <div class="container">
             <h2 class="text-center mb-5 section-title">Administrasi Musik</h2>
             <div class="row">
-                <div class="col-md-8 mx-auto">
+                <div class="col-md-10 mx-auto">
                     <div class="admin-panel">
                         <!-- Tabs -->
                         <ul class="nav nav-tabs mb-4" id="adminTabs" role="tablist">
                             <li class="nav-item" role="presentation">
-                                <button class="nav-link active" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">
+                                <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" data-bs-target="#dashboard" type="button" role="tab">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload" type="button" role="tab">
                                     <i class="fas fa-upload me-2"></i>Upload Musik
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="manage-tab" data-bs-toggle="tab" data-bs-target="#manage" type="button" role="tab">
                                     <i class="fas fa-music me-2"></i>Kelola Musik
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button" role="tab">
+                                    <i class="fas fa-database me-2"></i>Backup & Restore
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -282,8 +315,86 @@
                         
                         <!-- Tab Content -->
                         <div class="tab-content">
+                            <!-- Dashboard Tab -->
+                            <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                                <h4 class="mb-4">Dashboard Admin</h4>
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stat-card">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-music"></i>
+                                            </div>
+                                            <div class="stat-details">
+                                                <h3 id="dashboardTotalSongs">0</h3>
+                                                <p>Total Lagu</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stat-card" style="background: linear-gradient(135deg, #3498db, #2980b9);">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-users"></i>
+                                            </div>
+                                            <div class="stat-details">
+                                                <h3 id="dashboardTotalArtists">0</h3>
+                                                <p>Total Artis</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stat-card" style="background: linear-gradient(135deg, #2ecc71, #27ae60);">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-compact-disc"></i>
+                                            </div>
+                                            <div class="stat-details">
+                                                <h3 id="dashboardTotalAlbums">0</h3>
+                                                <p>Total Album</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stat-card" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
+                                            <div class="stat-icon">
+                                                <i class="fas fa-play"></i>
+                                            </div>
+                                            <div class="stat-details">
+                                                <h3 id="dashboardTotalPlays">0</h3>
+                                                <p>Total Putar</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header bg-info text-white">
+                                                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Genre Distribution</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="genreDistribution" class="text-center">
+                                                    <!-- Akan diisi JavaScript -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <h5 class="mb-0"><i class="fas fa-fire me-2"></i>Top 5 Most Played</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="topPlayed" class="list-group">
+                                                    <!-- Akan diisi JavaScript -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <!-- Upload Tab -->
-                            <div class="tab-pane fade show active" id="upload" role="tabpanel">
+                            <div class="tab-pane fade" id="upload" role="tabpanel">
                                 <h4 class="mb-4">Upload Musik Baru</h4>
                                 <form id="uploadForm">
                                     <div class="row">
@@ -315,6 +426,17 @@
                                         </div>
                                     </div>
                                     
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="duration" class="form-label">Durasi (menit:detik)</label>
+                                            <input type="text" class="form-control" id="duration" placeholder="Contoh: 4:30">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="year" class="form-label">Tahun Rilis</label>
+                                            <input type="number" class="form-control" id="year" min="1900" max="2026" value="2026">
+                                        </div>
+                                    </div>
+                                    
                                     <div class="mb-3">
                                         <label for="albumArt" class="form-label">Cover Album <span class="text-danger">*</span></label>
                                         <input type="file" class="form-control" id="albumArt" accept="image/*" required onchange="previewImage(this)">
@@ -341,69 +463,140 @@
                             
                             <!-- Manage Tab -->
                             <div class="tab-pane fade" id="manage" role="tabpanel">
-                                <h4 class="mb-4">Daftar Musik</h4>
+                                <h4 class="mb-4">Kelola Musik</h4>
                                 
                                 <!-- Search -->
                                 <div class="row mb-3">
-                                    <div class="col-md-12">
+                                    <div class="col-md-8">
                                         <div class="input-group">
                                             <span class="input-group-text"><i class="fas fa-search"></i></span>
                                             <input type="text" class="form-control" id="searchMusic" placeholder="Cari musik..." onkeyup="filterAdminMusic()">
                                         </div>
                                     </div>
+                                    <div class="col-md-4">
+                                        <select class="form-control" id="genreFilter" onchange="filterAdminByGenre()">
+                                            <option value="">Semua Genre</option>
+                                            <option value="Pop">Pop</option>
+                                            <option value="Rock">Rock</option>
+                                            <option value="Jazz">Jazz</option>
+                                            <option value="Classical">Classical</option>
+                                            <option value="Dangdut">Dangdut</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <!-- Bulk Actions -->
+                                <div class="mb-3" id="bulkActions" style="display: none;">
+                                    <div class="btn-group">
+                                        <button class="btn btn-danger btn-sm" onclick="deleteSelected()">
+                                            <i class="fas fa-trash me-2"></i>Hapus Terpilih
+                                        </button>
+                                        <button class="btn btn-info btn-sm" onclick="exportSelected()">
+                                            <i class="fas fa-download me-2"></i>Export Terpilih
+                                        </button>
+                                    </div>
+                                    <span class="ms-3" id="selectedCount">0 terpilih</span>
                                 </div>
                                 
                                 <!-- Music List -->
-                                <div class="music-list" id="musicList">
+                                <div class="music-list" id="musicList" style="max-height: 500px; overflow-y: auto;">
                                     <!-- Daftar musik akan ditampilkan disini -->
+                                </div>
+                            </div>
+                            
+                            <!-- Backup Tab -->
+                            <div class="tab-pane fade" id="backup" role="tabpanel">
+                                <h4 class="mb-4">Backup & Restore Data</h4>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-download fa-4x text-primary mb-3"></i>
+                                                <h5>Export Data</h5>
+                                                <p class="text-muted">Download semua data musik ke file JSON</p>
+                                                <button class="btn btn-primary" onclick="exportMusicData()">
+                                                    <i class="fas fa-download me-2"></i>Export JSON
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-upload fa-4x text-success mb-3"></i>
+                                                <h5>Import Data</h5>
+                                                <p class="text-muted">Import data musik dari file JSON</p>
+                                                <button class="btn btn-success" onclick="document.getElementById('importFile').click()">
+                                                    <i class="fas fa-upload me-2"></i>Import JSON
+                                                </button>
+                                                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importMusicData(event)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-save fa-4x text-info mb-3"></i>
+                                                <h5>Backup Lokal</h5>
+                                                <p class="text-muted">Buat backup data di browser</p>
+                                                <button class="btn btn-info" onclick="backupData()">
+                                                    <i class="fas fa-save me-2"></i>Buat Backup
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="card h-100">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-undo fa-4x text-warning mb-3"></i>
+                                                <h5>Restore Backup</h5>
+                                                <p class="text-muted">Restore data dari backup lokal</p>
+                                                <button class="btn btn-warning" onclick="restoreFromBackup()">
+                                                    <i class="fas fa-undo me-2"></i>Restore Backup
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12 mb-3">
+                                        <div class="card border-danger">
+                                            <div class="card-body text-center">
+                                                <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
+                                                <h5>Reset ke Default</h5>
+                                                <p class="text-muted">Kembalikan data ke default (semua perubahan akan hilang!)</p>
+                                                <button class="btn btn-danger" onclick="resetToDefault()">
+                                                    <i class="fas fa-redo-alt me-2"></i>Reset ke Default
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
                             <!-- Stats Tab -->
                             <div class="tab-pane fade" id="stats" role="tabpanel">
-                                <h4 class="mb-4">Statistik Musik</h4>
+                                <h4 class="mb-4">Statistik Lengkap</h4>
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
-                                        <div class="stat-card">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-music"></i>
+                                        <div class="card">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="mb-0">Genre Distribution</h5>
                                             </div>
-                                            <div class="stat-details">
-                                                <h3 id="totalSongs">0</h3>
-                                                <p>Total Lagu</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <div class="stat-card">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-users"></i>
-                                            </div>
-                                            <div class="stat-details">
-                                                <h3 id="totalArtists">0</h3>
-                                                <p>Total Artis</p>
+                                            <div class="card-body">
+                                                <div id="genreStats" class="list-group">
+                                                    <!-- Akan diisi JavaScript -->
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6 mb-3">
-                                        <div class="stat-card">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-compact-disc"></i>
+                                        <div class="card">
+                                            <div class="card-header bg-success text-white">
+                                                <h5 class="mb-0">Top Artists</h5>
                                             </div>
-                                            <div class="stat-details">
-                                                <h3 id="totalAlbums">0</h3>
-                                                <p>Total Album</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <div class="stat-card">
-                                            <div class="stat-icon">
-                                                <i class="fas fa-play"></i>
-                                            </div>
-                                            <div class="stat-details">
-                                                <h3 id="totalPlays">0</h3>
-                                                <p>Total Putar</p>
+                                            <div class="card-body">
+                                                <div id="topArtists" class="list-group">
+                                                    <!-- Akan diisi JavaScript -->
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
