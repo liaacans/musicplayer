@@ -1,7 +1,7 @@
 // Music Data Management
 const MusicData = {
     // Key untuk localStorage
-    STORAGE_KEY: 'music_library',
+    STORAGE_KEY: 'musicplayer/datanya',
     
     // Array untuk menyimpan musik
     songs: [],
@@ -182,7 +182,7 @@ const MusicData = {
     },
     
     // Sample data untuk demo
-    addSampleData: function() {
+    /*addSampleData: function() {
         console.log('Adding sample data...');
         
         const sampleSongs = [
@@ -241,7 +241,7 @@ const MusicData = {
         
         this.saveToStorage();
         console.log('Sample data added:', this.songs.length, 'songs');
-    }
+    }*/
 };
 
 // Inisialisasi saat file dimuat
