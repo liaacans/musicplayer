@@ -1,4 +1,4 @@
-// Music Player Class - Untuk semua user
+// Music Player Class - Dengan play count update
 class MusicPlayer {
     constructor() {
         this.audio = new Audio();
@@ -46,6 +46,11 @@ class MusicPlayer {
         
         // Update status
         this.updateStatus('stopped', '🎵 Selamat datang! Pilih lagu untuk diputar');
+        
+        // Listen for data changes
+        document.addEventListener('musicDataChanged', () => {
+            this.updatePlaylistDisplay();
+        });
         
         console.log('Music Player initialized');
     }
@@ -96,15 +101,6 @@ class MusicPlayer {
                 .catch(error => {
                     console.error('Error playing audio:', error);
                     this.updateStatus('error', '❌ Gagal memutar lagu. Coba lagi.');
-                    
-                    // Fallback ke URL langsung
-                    if (song.audioUrl.startsWith('data:')) {
-                        console.log('Trying with data URL...');
-                        this.audio.src = song.audioUrl;
-                        this.audio.play().catch(e => {
-                            console.error('Still failed:', e);
-                        });
-                    }
                 });
         }
     }
@@ -126,6 +122,13 @@ class MusicPlayer {
                 </small>
             </div>
         `;
+    }
+    
+    updatePlaylistDisplay() {
+        // Update playlist di UI publik
+        if (typeof renderPublicMusic === 'function') {
+            renderPublicMusic();
+        }
     }
     
     togglePlay() {
@@ -349,13 +352,3 @@ function scrollToMusic() {
 function scrollToPlaylist() {
     document.getElementById('playlist').scrollIntoView({ behavior: 'smooth' });
 }
-
-// Navbar scroll effect
-window.addEventListener('scroll', () => {
-    const navbar = document.querySelector('.navbar');
-    if (window.scrollY > 50) {
-        navbar.classList.add('scrolled');
-    } else {
-        navbar.classList.remove('scrolled');
-    }
-});

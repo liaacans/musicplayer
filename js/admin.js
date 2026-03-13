@@ -1,4 +1,4 @@
-// Admin Functions
+// Admin Functions - Dengan fitur import/export JSON
 let currentUser = null;
 
 // Update current user dari auth
@@ -350,28 +350,199 @@ function updateStats() {
     if (totalPlays) totalPlays.textContent = stats.totalPlays;
 }
 
-// Reset all data
-function resetAllData() {
+// Export data ke file JSON
+function exportMusicData() {
     if (!currentUser || currentUser.role !== 'admin') {
         showNotification('❌ Anda harus login sebagai admin!', 'error');
         return;
     }
     
-    if (confirm('⚠️ RESET SEMUA DATA? Semua musik akan hilang!')) {
-        MusicData.clearAll();
-        MusicData.addSampleData(); // Tambah sample data
+    const jsonData = MusicData.exportToJSON();
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `music_data_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification('✅ Data berhasil diexport!', 'success');
+}
+
+// Import data dari file JSON
+function importMusicData(event) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        showNotification('❌ Anda harus login sebagai admin!', 'error');
+        return;
+    }
+    
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const result = MusicData.importFromJSON(e.target.result);
+            if (result.success) {
+                renderMusicList();
+                updateStats();
+                document.dispatchEvent(new CustomEvent('musicDataChanged'));
+                showNotification(`✅ Berhasil import ${result.count} lagu!`, 'success');
+            } else {
+                showNotification('❌ ' + result.message, 'error');
+            }
+        } catch (error) {
+            showNotification('❌ Error: ' + error.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+    
+    // Reset input
+    event.target.value = '';
+}
+
+// Reset ke data default
+function resetToDefault() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        showNotification('❌ Anda harus login sebagai admin!', 'error');
+        return;
+    }
+    
+    if (MusicData.resetToDefault()) {
         renderMusicList();
         updateStats();
-        
-        // Trigger event untuk publik
         document.dispatchEvent(new CustomEvent('musicDataChanged'));
-        
-        showNotification('✅ Data telah direset!', 'success');
+        showNotification('✅ Data direset ke default!', 'success');
+    }
+}
+
+// Backup data
+function backupData() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        showNotification('❌ Anda harus login sebagai admin!', 'error');
+        return;
+    }
+    
+    MusicData.createBackup();
+    showNotification('✅ Backup data berhasil dibuat!', 'success');
+}
+
+// Restore dari backup
+function restoreFromBackup() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        showNotification('❌ Anda harus login sebagai admin!', 'error');
+        return;
+    }
+    
+    if (MusicData.restoreFromBackup()) {
+        renderMusicList();
+        updateStats();
+        document.dispatchEvent(new CustomEvent('musicDataChanged'));
+        showNotification('✅ Data direstore dari backup!', 'success');
+    } else {
+        showNotification('❌ Tidak ada backup tersedia', 'error');
     }
 }
 
 // Debug function
 function debugMusicData() {
     console.log('Current music data:', MusicData.getAllSongs());
+    console.log('Metadata:', MusicData.metadata);
     showNotification('🔍 Cek console untuk detail data musik', 'info');
 }
+
+// Tambahkan tombol import/export di admin panel
+document.addEventListener('DOMContentLoaded', function() {
+    // Tunggu sampai admin panel terload
+    setTimeout(() => {
+        const adminTabs = document.getElementById('adminTabs');
+        if (adminTabs) {
+            // Tambahkan tab baru untuk backup
+            const backupTab = document.createElement('li');
+            backupTab.className = 'nav-item';
+            backupTab.innerHTML = `
+                <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button" role="tab">
+                    <i class="fas fa-database me-2"></i>Backup & Restore
+                </button>
+            `;
+            adminTabs.appendChild(backupTab);
+            
+            // Tambahkan konten tab backup
+            const tabContent = document.querySelector('.tab-content');
+            const backupContent = document.createElement('div');
+            backupContent.className = 'tab-pane fade';
+            backupContent.id = 'backup';
+            backupContent.setAttribute('role', 'tabpanel');
+            backupContent.innerHTML = `
+                <h4 class="mb-4">Backup & Restore Data</h4>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-download fa-3x text-primary mb-3"></i>
+                                <h5>Export Data</h5>
+                                <p class="text-muted">Download semua data musik ke file JSON</p>
+                                <button class="btn btn-primary" onclick="exportMusicData()">
+                                    <i class="fas fa-download me-2"></i>Export JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-upload fa-3x text-success mb-3"></i>
+                                <h5>Import Data</h5>
+                                <p class="text-muted">Import data musik dari file JSON</p>
+                                <button class="btn btn-success" onclick="document.getElementById('importFile').click()">
+                                    <i class="fas fa-upload me-2"></i>Import JSON
+                                </button>
+                                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importMusicData(event)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-save fa-3x text-info mb-3"></i>
+                                <h5>Backup</h5>
+                                <p class="text-muted">Buat backup data di browser</p>
+                                <button class="btn btn-info" onclick="backupData()">
+                                    <i class="fas fa-save me-2"></i>Buat Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <i class="fas fa-undo fa-3x text-warning mb-3"></i>
+                                <h5>Restore</h5>
+                                <p class="text-muted">Restore data dari backup</p>
+                                <button class="btn btn-warning" onclick="restoreFromBackup()">
+                                    <i class="fas fa-undo me-2"></i>Restore Backup
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <div class="card border-danger">
+                            <div class="card-body text-center">
+                                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                                <h5>Reset ke Default</h5>
+                                <p class="text-muted">Kembalikan data ke default (semua perubahan akan hilang!)</p>
+                                <button class="btn btn-danger" onclick="resetToDefault()">
+                                    <i class="fas fa-redo-alt me-2"></i>Reset ke Default
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            tabContent.appendChild(backupContent);
+        }
+    }, 1000);
+});
