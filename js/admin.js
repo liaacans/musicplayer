@@ -1,4 +1,4 @@
-// Admin Functions - Dengan fitur import/export JSON
+// Admin Functions - Dengan fitur lengkap
 let currentUser = null;
 
 // Update current user dari auth
@@ -13,10 +13,13 @@ document.addEventListener('authChanged', function(e) {
             adminSection.style.display = 'block';
         }
         
-        // Render music list saat login
+        // Render semua komponen admin
         setTimeout(() => {
             renderMusicList();
-            updateStats();
+            updateAllStats();
+            renderDashboard();
+            renderGenreDistribution();
+            renderTopPlayed();
         }, 200);
     } else {
         // Sembunyikan admin section
@@ -58,6 +61,7 @@ function uploadMusic() {
     const artist = document.getElementById('artistName').value;
     const album = document.getElementById('albumName').value;
     const genre = document.getElementById('genre').value;
+    const duration = document.getElementById('duration').value;
     const albumArtFile = document.getElementById('albumArt').files[0];
     const musicFile = document.getElementById('musicFile').files[0];
     
@@ -113,9 +117,6 @@ function uploadMusic() {
     ]).then(([albumArtBase64, musicBase64]) => {
         console.log('Files converted to base64');
         
-        // Calculate duration (simulasi)
-        const duration = calculateDuration(musicFile);
-        
         // Add to music data
         const newSong = MusicData.addSong({
             title: title,
@@ -124,7 +125,7 @@ function uploadMusic() {
             genre: genre,
             albumArt: albumArtBase64,
             audioUrl: musicBase64,
-            duration: duration,
+            duration: duration || calculateDuration(musicFile),
             uploadedBy: currentUser.username
         });
         
@@ -144,7 +145,10 @@ function uploadMusic() {
             
             // Refresh displays
             renderMusicList();
-            updateStats();
+            updateAllStats();
+            renderDashboard();
+            renderGenreDistribution();
+            renderTopPlayed();
             
             showNotification(`✅ Musik "${title}" berhasil diupload! ID: #${newSong.id}`, 'success');
             
@@ -171,8 +175,7 @@ function fileToBase64(file) {
 
 // Calculate duration (simulasi)
 function calculateDuration(file) {
-    // Ini hanya simulasi, seharusnya menggunakan audio context
-    const minutes = Math.floor(Math.random() * 4) + 3; // 3-7 menit
+    const minutes = Math.floor(Math.random() * 4) + 3;
     const seconds = Math.floor(Math.random() * 60);
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
@@ -200,6 +203,9 @@ function renderMusicList() {
     
     musicList.innerHTML = songs.map(song => `
         <div class="music-item" data-id="${song.id}">
+            <div class="music-item-check">
+                <input type="checkbox" class="form-check-input music-checkbox" value="${song.id}" onchange="toggleBulkActions()">
+            </div>
             <div class="music-item-img">
                 <img src="${song.albumArt || 'https://via.placeholder.com/50x50?text=Music'}" 
                      alt="${song.title}"
@@ -209,18 +215,22 @@ function renderMusicList() {
                 <div class="music-item-title">
                     ${song.title} 
                     <span class="badge bg-primary">ID: #${song.id}</span>
+                    <span class="badge bg-secondary">${song.genre}</span>
                 </div>
                 <div class="music-item-artist">${song.artist}</div>
                 <div class="music-item-meta small">
                     <span><i class="fas fa-compact-disc"></i> ${song.album || 'Single'}</span>
-                    <span><i class="fas fa-tag"></i> ${song.genre}</span>
                     <span><i class="fas fa-clock"></i> ${song.duration || '3:00'}</span>
                     <span><i class="fas fa-play"></i> ${song.plays || 0} plays</span>
+                    <span><i class="fas fa-calendar"></i> ${song.uploadDate}</span>
                 </div>
             </div>
             <div class="music-item-actions">
                 <button class="btn-action" onclick="playMusicById(${song.id})" title="Play">
                     <i class="fas fa-play"></i>
+                </button>
+                <button class="btn-action" onclick="editMusic(${song.id})" title="Edit">
+                    <i class="fas fa-edit"></i>
                 </button>
                 <button class="btn-action delete" onclick="deleteMusic(${song.id})" title="Hapus">
                     <i class="fas fa-trash"></i>
@@ -231,6 +241,94 @@ function renderMusicList() {
             </div>
         </div>
     `).join('');
+}
+
+// Toggle bulk actions
+function toggleBulkActions() {
+    const checkboxes = document.querySelectorAll('.music-checkbox:checked');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (checkboxes.length > 0) {
+        bulkActions.style.display = 'block';
+        selectedCount.textContent = `${checkboxes.length} terpilih`;
+    } else {
+        bulkActions.style.display = 'none';
+    }
+}
+
+// Delete selected
+function deleteSelected() {
+    if (!currentUser || currentUser.role !== 'admin') {
+        showNotification('❌ Anda harus login sebagai admin!', 'error');
+        return;
+    }
+    
+    const checkboxes = document.querySelectorAll('.music-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    
+    if (ids.length === 0) return;
+    
+    if (confirm(`Hapus ${ids.length} musik terpilih?`)) {
+        ids.forEach(id => {
+            MusicData.deleteSong(id);
+            
+            // If currently playing this song, stop it
+            if (musicPlayer.currentSongId === id) {
+                musicPlayer.audio.pause();
+                musicPlayer.currentSongId = null;
+            }
+        });
+        
+        renderMusicList();
+        updateAllStats();
+        document.dispatchEvent(new CustomEvent('musicDataChanged'));
+        showNotification(`✅ ${ids.length} musik berhasil dihapus!`, 'success');
+        
+        document.getElementById('bulkActions').style.display = 'none';
+    }
+}
+
+// Export selected
+function exportSelected() {
+    const checkboxes = document.querySelectorAll('.music-checkbox:checked');
+    const ids = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    
+    const selectedSongs = MusicData.songs.filter(s => ids.includes(s.id));
+    const exportData = {
+        songs: selectedSongs,
+        exportDate: new Date().toISOString(),
+        count: selectedSongs.length
+    };
+    
+    const jsonData = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonData], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `selected_music_${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showNotification(`✅ ${selectedSongs.length} musik diexport!`, 'success');
+}
+
+// Edit music
+function editMusic(id) {
+    const song = MusicData.getSongById(id);
+    if (!song) return;
+    
+    const newTitle = prompt('Edit judul lagu:', song.title);
+    if (newTitle && newTitle !== song.title) {
+        song.title = newTitle;
+        MusicData.saveToStorage();
+        renderMusicList();
+        document.dispatchEvent(new CustomEvent('musicDataChanged'));
+        showNotification('✅ Judul lagu diupdate!', 'success');
+    }
 }
 
 // Play music by ID
@@ -272,7 +370,8 @@ function deleteMusic(id) {
         
         // Refresh displays
         renderMusicList();
-        updateStats();
+        updateAllStats();
+        renderDashboard();
         
         // Trigger event untuk publik
         document.dispatchEvent(new CustomEvent('musicDataChanged'));
@@ -311,43 +410,182 @@ function filterAdminMusic() {
     }
     
     const results = MusicData.searchSongs(query);
-    
+    displayAdminResults(results);
+}
+
+// Filter by genre
+function filterAdminByGenre() {
+    const genre = document.getElementById('genreFilter').value;
+    const results = MusicData.filterByGenre(genre);
+    displayAdminResults(results);
+}
+
+// Display admin results
+function displayAdminResults(results) {
     const musicList = document.getElementById('musicList');
+    
     if (results.length === 0) {
-        musicList.innerHTML = '<p class="text-center text-muted">Tidak ada hasil</p>';
-    } else {
-        musicList.innerHTML = results.map(song => `
-            <div class="music-item" data-id="${song.id}">
-                <div class="music-item-img">
-                    <img src="${song.albumArt}" alt="${song.title}">
-                </div>
-                <div class="music-item-info">
-                    <div class="music-item-title">${song.title}</div>
-                    <div class="music-item-artist">${song.artist}</div>
-                </div>
-                <div class="music-item-actions">
-                    <button class="btn-action" onclick="playMusicById(${song.id})">
-                        <i class="fas fa-play"></i>
-                    </button>
+        musicList.innerHTML = '<p class="text-center text-muted py-5">Tidak ada hasil</p>';
+        return;
+    }
+    
+    musicList.innerHTML = results.map(song => `
+        <div class="music-item" data-id="${song.id}">
+            <div class="music-item-img">
+                <img src="${song.albumArt}" alt="${song.title}">
+            </div>
+            <div class="music-item-info">
+                <div class="music-item-title">${song.title}</div>
+                <div class="music-item-artist">${song.artist}</div>
+            </div>
+            <div class="music-item-actions">
+                <button class="btn-action" onclick="playMusicById(${song.id})">
+                    <i class="fas fa-play"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Update all stats
+function updateAllStats() {
+    const stats = MusicData.getStats();
+    
+    document.getElementById('totalSongs').textContent = stats.totalSongs;
+    document.getElementById('totalArtists').textContent = stats.totalArtists;
+    document.getElementById('totalAlbums').textContent = stats.totalAlbums;
+    document.getElementById('totalPlays').textContent = stats.totalPlays;
+    
+    document.getElementById('dashboardTotalSongs').textContent = stats.totalSongs;
+    document.getElementById('dashboardTotalArtists').textContent = stats.totalArtists;
+    document.getElementById('dashboardTotalAlbums').textContent = stats.totalAlbums;
+    document.getElementById('dashboardTotalPlays').textContent = stats.totalPlays;
+}
+
+// Render dashboard
+function renderDashboard() {
+    renderGenreDistribution();
+    renderTopPlayed();
+    renderTopArtists();
+}
+
+// Render genre distribution
+function renderGenreDistribution() {
+    const songs = MusicData.getAllSongs();
+    const genreCount = {};
+    
+    songs.forEach(song => {
+        genreCount[song.genre] = (genreCount[song.genre] || 0) + 1;
+    });
+    
+    const genreDist = document.getElementById('genreDistribution');
+    if (!genreDist) return;
+    
+    if (songs.length === 0) {
+        genreDist.innerHTML = '<p class="text-muted">Belum ada data</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    Object.entries(genreCount).sort((a,b) => b[1] - a[1]).forEach(([genre, count]) => {
+        const percentage = Math.round((count / songs.length) * 100);
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <span>${genre}</span>
+                <div>
+                    <span class="badge bg-primary rounded-pill me-2">${count}</span>
+                    <span class="badge bg-secondary">${percentage}%</span>
                 </div>
             </div>
-        `).join('');
+        `;
+    });
+    html += '</div>';
+    
+    genreDist.innerHTML = html;
+    
+    // Update genre stats tab
+    const genreStats = document.getElementById('genreStats');
+    if (genreStats) {
+        genreStats.innerHTML = html;
     }
 }
 
-// Update stats
-function updateStats() {
-    const stats = MusicData.getStats();
+// Render top played
+function renderTopPlayed() {
+    const songs = MusicData.getAllSongs();
+    const topPlayed = [...songs].sort((a, b) => (b.plays || 0) - (a.plays || 0)).slice(0, 5);
     
-    const totalSongs = document.getElementById('totalSongs');
-    const totalArtists = document.getElementById('totalArtists');
-    const totalAlbums = document.getElementById('totalAlbums');
-    const totalPlays = document.getElementById('totalPlays');
+    const topPlayedEl = document.getElementById('topPlayed');
+    if (!topPlayedEl) return;
     
-    if (totalSongs) totalSongs.textContent = stats.totalSongs;
-    if (totalArtists) totalArtists.textContent = stats.totalArtists;
-    if (totalAlbums) totalAlbums.textContent = stats.totalAlbums;
-    if (totalPlays) totalPlays.textContent = stats.totalPlays;
+    if (topPlayed.length === 0) {
+        topPlayedEl.innerHTML = '<p class="text-muted">Belum ada data</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    topPlayed.forEach((song, index) => {
+        html += `
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-${index === 0 ? 'warning' : 'secondary'} me-2">#${index + 1}</span>
+                    <strong>${song.title}</strong> - ${song.artist}
+                </div>
+                <span class="badge bg-info">${song.plays || 0} plays</span>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    topPlayedEl.innerHTML = html;
+}
+
+// Render top artists
+function renderTopArtists() {
+    const songs = MusicData.getAllSongs();
+    const artistPlays = {};
+    
+    songs.forEach(song => {
+        if (!artistPlays[song.artist]) {
+            artistPlays[song.artist] = {
+                plays: 0,
+                songs: 0
+            };
+        }
+        artistPlays[song.artist].plays += song.plays || 0;
+        artistPlays[song.artist].songs += 1;
+    });
+    
+    const topArtists = Object.entries(artistPlays)
+        .sort((a, b) => b[1].plays - a[1].plays)
+        .slice(0, 5);
+    
+    const topArtistsEl = document.getElementById('topArtists');
+    if (!topArtistsEl) return;
+    
+    if (topArtists.length === 0) {
+        topArtistsEl.innerHTML = '<p class="text-muted">Belum ada data</p>';
+        return;
+    }
+    
+    let html = '<div class="list-group">';
+    topArtists.forEach(([artist, data], index) => {
+        html += `
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-${index === 0 ? 'warning' : 'secondary'} me-2">#${index + 1}</span>
+                        <strong>${artist}</strong>
+                    </div>
+                    <span class="badge bg-info">${data.plays} plays</span>
+                </div>
+                <small class="text-muted">${data.songs} lagu</small>
+            </div>
+        `;
+    });
+    html += '</div>';
+    
+    topArtistsEl.innerHTML = html;
 }
 
 // Export data ke file JSON
@@ -388,7 +626,8 @@ function importMusicData(event) {
             const result = MusicData.importFromJSON(e.target.result);
             if (result.success) {
                 renderMusicList();
-                updateStats();
+                updateAllStats();
+                renderDashboard();
                 document.dispatchEvent(new CustomEvent('musicDataChanged'));
                 showNotification(`✅ Berhasil import ${result.count} lagu!`, 'success');
             } else {
@@ -411,9 +650,13 @@ function resetToDefault() {
         return;
     }
     
-    if (MusicData.resetToDefault()) {
+    if (confirm('⚠️ Reset ke data default? Semua perubahan akan hilang!')) {
+        MusicData.clearAll();
+        MusicData.loadFromJSON();
+        MusicData.saveToStorage();
         renderMusicList();
-        updateStats();
+        updateAllStats();
+        renderDashboard();
         document.dispatchEvent(new CustomEvent('musicDataChanged'));
         showNotification('✅ Data direset ke default!', 'success');
     }
@@ -439,110 +682,11 @@ function restoreFromBackup() {
     
     if (MusicData.restoreFromBackup()) {
         renderMusicList();
-        updateStats();
+        updateAllStats();
+        renderDashboard();
         document.dispatchEvent(new CustomEvent('musicDataChanged'));
         showNotification('✅ Data direstore dari backup!', 'success');
     } else {
         showNotification('❌ Tidak ada backup tersedia', 'error');
     }
 }
-
-// Debug function
-function debugMusicData() {
-    console.log('Current music data:', MusicData.getAllSongs());
-    console.log('Metadata:', MusicData.metadata);
-    showNotification('🔍 Cek console untuk detail data musik', 'info');
-}
-
-// Tambahkan tombol import/export di admin panel
-document.addEventListener('DOMContentLoaded', function() {
-    // Tunggu sampai admin panel terload
-    setTimeout(() => {
-        const adminTabs = document.getElementById('adminTabs');
-        if (adminTabs) {
-            // Tambahkan tab baru untuk backup
-            const backupTab = document.createElement('li');
-            backupTab.className = 'nav-item';
-            backupTab.innerHTML = `
-                <button class="nav-link" id="backup-tab" data-bs-toggle="tab" data-bs-target="#backup" type="button" role="tab">
-                    <i class="fas fa-database me-2"></i>Backup & Restore
-                </button>
-            `;
-            adminTabs.appendChild(backupTab);
-            
-            // Tambahkan konten tab backup
-            const tabContent = document.querySelector('.tab-content');
-            const backupContent = document.createElement('div');
-            backupContent.className = 'tab-pane fade';
-            backupContent.id = 'backup';
-            backupContent.setAttribute('role', 'tabpanel');
-            backupContent.innerHTML = `
-                <h4 class="mb-4">Backup & Restore Data</h4>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-download fa-3x text-primary mb-3"></i>
-                                <h5>Export Data</h5>
-                                <p class="text-muted">Download semua data musik ke file JSON</p>
-                                <button class="btn btn-primary" onclick="exportMusicData()">
-                                    <i class="fas fa-download me-2"></i>Export JSON
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-upload fa-3x text-success mb-3"></i>
-                                <h5>Import Data</h5>
-                                <p class="text-muted">Import data musik dari file JSON</p>
-                                <button class="btn btn-success" onclick="document.getElementById('importFile').click()">
-                                    <i class="fas fa-upload me-2"></i>Import JSON
-                                </button>
-                                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importMusicData(event)">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-save fa-3x text-info mb-3"></i>
-                                <h5>Backup</h5>
-                                <p class="text-muted">Buat backup data di browser</p>
-                                <button class="btn btn-info" onclick="backupData()">
-                                    <i class="fas fa-save me-2"></i>Buat Backup
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <div class="card">
-                            <div class="card-body text-center">
-                                <i class="fas fa-undo fa-3x text-warning mb-3"></i>
-                                <h5>Restore</h5>
-                                <p class="text-muted">Restore data dari backup</p>
-                                <button class="btn btn-warning" onclick="restoreFromBackup()">
-                                    <i class="fas fa-undo me-2"></i>Restore Backup
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-12 mb-3">
-                        <div class="card border-danger">
-                            <div class="card-body text-center">
-                                <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
-                                <h5>Reset ke Default</h5>
-                                <p class="text-muted">Kembalikan data ke default (semua perubahan akan hilang!)</p>
-                                <button class="btn btn-danger" onclick="resetToDefault()">
-                                    <i class="fas fa-redo-alt me-2"></i>Reset ke Default
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            tabContent.appendChild(backupContent);
-        }
-    }, 1000);
-});
