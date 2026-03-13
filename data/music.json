@@ -1,0 +1,121 @@
+{
+  "songs": [
+    {
+      "id": 1,
+      "title": "Berita Kepada Kawan",
+      "artist": "Ebiet G. Ade",
+      "album": "Camellia",
+      "genre": "Pop",
+      "albumArt": "https://via.placeholder.com/300x300/667eea/ffffff?text=EBIT",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+      "duration": "4:30",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-01-15 10:30:00",
+      "plays": 1250,
+      "createdAt": 1705300200000
+    },
+    {
+      "id": 2,
+      "title": "Kisah Kasih di Sekolah",
+      "artist": "Chrisye",
+      "album": "Kisah Kasih",
+      "genre": "Pop",
+      "albumArt": "https://via.placeholder.com/300x300/764ba2/ffffff?text=CHRISYE",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+      "duration": "5:15",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-01-20 14:45:00",
+      "plays": 980,
+      "createdAt": 1705754700000
+    },
+    {
+      "id": 3,
+      "title": "Bohemian Rhapsody",
+      "artist": "Queen",
+      "album": "A Night at the Opera",
+      "genre": "Rock",
+      "albumArt": "https://via.placeholder.com/300x300/e74c3c/ffffff?text=QUEEN",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+      "duration": "5:55",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-01-25 09:15:00",
+      "plays": 3450,
+      "createdAt": 1706174100000
+    },
+    {
+      "id": 4,
+      "title": "Take Five",
+      "artist": "Dave Brubeck",
+      "album": "Time Out",
+      "genre": "Jazz",
+      "albumArt": "https://via.placeholder.com/300x300/3498db/ffffff?text=JAZZ",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+      "duration": "5:24",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-02-01 16:20:00",
+      "plays": 2100,
+      "createdAt": 1706782800000
+    },
+    {
+      "id": 5,
+      "title": "Ghibah",
+      "artist": "Via Vallen",
+      "album": "Via Vallen",
+      "genre": "Dangdut",
+      "albumArt": "https://via.placeholder.com/300x300/f1c40f/ffffff?text=DANGDUT",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+      "duration": "4:45",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-02-05 11:10:00",
+      "plays": 1850,
+      "createdAt": 1707124200000
+    },
+    {
+      "id": 6,
+      "title": "Laskar Pelangi",
+      "artist": "Nidji",
+      "album": "Laskar Pelangi",
+      "genre": "Pop",
+      "albumArt": "https://via.placeholder.com/300x300/2ecc71/ffffff?text=NIDJI",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+      "duration": "4:10",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-02-10 13:30:00",
+      "plays": 3200,
+      "createdAt": 1707550200000
+    },
+    {
+      "id": 7,
+      "title": "Bento",
+      "artist": "Iwan Fals",
+      "album": "Bento",
+      "genre": "Rock",
+      "albumArt": "https://via.placeholder.com/300x300/e67e22/ffffff?text=IWAN",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+      "duration": "4:35",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-02-15 10:45:00",
+      "plays": 2800,
+      "createdAt": 1707972300000
+    },
+    {
+      "id": 8,
+      "title": "Runtuh",
+      "artist": "Feby Putri",
+      "album": "Runtuh",
+      "genre": "Pop",
+      "albumArt": "https://via.placeholder.com/300x300/9b59b6/ffffff?text=FEBY",
+      "audioUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+      "duration": "4:50",
+      "uploadedBy": "admin",
+      "uploadDate": "2024-02-20 15:00:00",
+      "plays": 1500,
+      "createdAt": 1708426800000
+    }
+  ],
+  "metadata": {
+    "totalSongs": 8,
+    "lastUpdated": "2024-03-14 09:00:00",
+    "version": "1.0"
+  }
+}
